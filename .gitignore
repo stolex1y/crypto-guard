@@ -1,3 +1,6 @@
-*.cache/
 CMakeUserPresets.json
-*build/
+build
+.cache
+conan-docker
+cmake-build*
+.idea
