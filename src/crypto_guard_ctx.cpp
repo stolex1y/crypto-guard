@@ -1,4 +1,4 @@
 
-namespace CryptoGuard {
+namespace crypto_guard {
 
-}  // namespace CryptoGuard
+}  // namespace crypto_guard
