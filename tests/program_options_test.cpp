@@ -106,4 +106,32 @@ TEST_F(ProgramOptionsTest, encrypt_command_with_all_options) {
     ASSERT_FALSE(po_.IsHelp());
 }
 
+TEST_F(ProgramOptionsTest, decrypt_command_with_all_options) {
+    constexpr auto option_input = "input.txt";
+    constexpr auto option_output = "output";
+    constexpr auto option_password = "pass";
+    test_options_["--command"] = "decrypt";
+    test_options_["--input"] = option_input;
+    test_options_["--output"] = option_output;
+    test_options_["--password"] = option_password;
+    const auto res = ParseTestOptions();
+    ASSERT_TRUE(res.has_value());
+    ASSERT_EQ(po_.GetCommand(), ProgramOptions::CommandType::decrypt);
+    ASSERT_EQ(po_.GetInputFile(), option_input);
+    ASSERT_EQ(po_.GetOutputFile(), option_output);
+    ASSERT_EQ(po_.GetPassword(), option_password);
+    ASSERT_FALSE(po_.IsHelp());
+}
+
+TEST_F(ProgramOptionsTest, checksum_command_with_all_options) {
+    constexpr auto option_input = "input.txt";
+    test_options_["--command"] = "checksum";
+    test_options_["--input"] = option_input;
+    const auto res = ParseTestOptions();
+    ASSERT_TRUE(res.has_value());
+    ASSERT_EQ(po_.GetCommand(), ProgramOptions::CommandType::checksum);
+    ASSERT_EQ(po_.GetInputFile(), option_input);
+    ASSERT_FALSE(po_.IsHelp());
+}
+
 }  // namespace crypto_guard::test

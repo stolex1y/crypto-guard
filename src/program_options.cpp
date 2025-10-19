@@ -40,12 +40,36 @@ std::expected<void, std::string> ProgramOptions::Parse(std::span<const char* con
             throw po::required_option(s_option_command);
         }
 
-        if (not vm.contains(s_option_input)) {
-            throw po::required_option(s_option_input);
-        }
+        switch (command_) {
+        case CommandType::encrypt:
+            [[fallthrough]];
+        case CommandType::decrypt: {
+            if (not vm.contains(s_option_input)) {
+                throw po::required_option(s_option_input);
+            }
 
-        if (not vm.contains(s_option_output)) {
-            throw po::required_option(s_option_output);
+            if (not vm.contains(s_option_output)) {
+                throw po::required_option(s_option_output);
+            }
+
+            if (input_file_ == output_file_) {
+                return std::unexpected{
+                    std::format("the input file must be different to the output '{}'", input_file_.string())};
+            }
+            break;
+        }
+        case CommandType::checksum: {
+            if (not vm.contains(s_option_input)) {
+                throw po::required_option(s_option_input);
+            }
+            break;
+        }
+        case CommandType::LAST: {
+            break;
+        }
+        default: {
+            assert(false);
+        }
         }
     } catch (const po::error& ex) {
         return std::unexpected{ex.what()};
