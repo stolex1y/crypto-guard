@@ -5,7 +5,7 @@ RUN apt clean
 RUN apt update
 
 # Install common tools
-RUN apt install -y python3-minimal python3-pip pipx git less vim sudo cmake make g++-15 clang-format clangd-20
+RUN apt install -y python3-minimal python3-pip pipx git less vim sudo cmake make g++-15 clang-format clangd-20 gdb
 
 # Install additional tools and libraries
 RUN apt install -y libjemalloc-dev
@@ -52,12 +52,16 @@ RUN set -e; \
 
 # Switch to non-root user
 USER $USERNAME
+WORKDIR /home/$USERNAME
 
 RUN git config --global core.editor code
 
 # Install conan through pipx
 RUN pipx install conan
 RUN pipx ensurepath
+
+RUN git clone https://github.com/conan-io/cmake-conan.git -b develop2
+ENV PATH /home/$USERNAME/.local/bin:$PATH
 
 # Set the default command
 CMD ["/bin/bash"]

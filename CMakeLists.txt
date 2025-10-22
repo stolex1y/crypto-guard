@@ -13,6 +13,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-fmax-errors=1)
 endif()
 
+option(ENABLE_ASAN "AddressSanitizer" OFF)
+
 # Ищем необходимые библиотеки
 find_package(OpenSSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options)
@@ -34,6 +36,12 @@ target_include_directories(${PROJECT_NAME}_imp PUBLIC
 )
 target_link_libraries(${PROJECT_NAME}_imp PRIVATE ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES})
 
+if(ENABLE_ASAN)
+    message(STATUS "AddressSanitizer enabled")
+    target_compile_options(${PROJECT_NAME}_imp PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(${PROJECT_NAME}_imp PUBLIC -fsanitize=address)
+endif()
+
 # Создаём исполняемый таргет и линкуем к нему статическую библиотеку
 add_executable(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/src/main.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_imp)
@@ -46,7 +54,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_imp)
 file(GLOB TEST_SRC_FILES "${CMAKE_SOURCE_DIR}/tests/*.cpp")
 
 add_executable(${PROJECT_NAME}_tests "${TEST_SRC_FILES}")
-target_link_libraries(${PROJECT_NAME}_tests PRIVATE ${PROJECT_NAME}_imp GTest::GTest GTest::Main)
+target_link_libraries(${PROJECT_NAME}_tests PRIVATE ${PROJECT_NAME}_imp GTest::GTest gtest_main)
 target_include_directories(${PROJECT_NAME}_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Включаем тестирование
