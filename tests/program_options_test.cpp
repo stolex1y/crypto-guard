@@ -15,19 +15,18 @@ public:
         options.emplace_back("CryptoGuard");
         for (const auto& [key, value] : test_options_) {
             options.emplace_back(key.c_str());
-            if (not value.empty()) {
+            if (!value.empty()) {
                 options.emplace_back(value.c_str());
             }
         }
         return options;
     }
 
-    [[nodiscard]] std::expected<void, std::string> ParseTestOptions() const {
+    [[nodiscard]] std::expected<ProgramOptions, std::string> ParseTestOptions() const {
         const auto options = TestOptionsToCli();
-        return po_.Parse(std::span(options.data(), options.size()));
+        return ProgramOptions::Parse(std::span(options.data(), options.size()));
     }
 
-    ProgramOptions po_;
     std::unordered_map<std::string, std::string> test_options_;
 };
 
@@ -35,8 +34,9 @@ TEST_F(ProgramOptionsTest, help_by_short_name_without_other_options) {
     test_options_["-h"];
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_TRUE(po_.IsHelp());
-    ASSERT_TRUE(po_.GetDescription().find("Allowed options") != std::string_view::npos);
+    const auto& po = res.value();
+    ASSERT_TRUE(po.IsHelp());
+    ASSERT_TRUE(po.GetDescription().find("Allowed options") != std::string_view::npos);
 }
 
 TEST_F(ProgramOptionsTest, help_by_short_name_with_other_options) {
@@ -46,16 +46,18 @@ TEST_F(ProgramOptionsTest, help_by_short_name_with_other_options) {
     test_options_["-p"] = "pass";
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_TRUE(po_.IsHelp());
-    ASSERT_TRUE(po_.GetDescription().find("Allowed options") != std::string_view::npos);
+    const auto& po = res.value();
+    ASSERT_TRUE(po.IsHelp());
+    ASSERT_TRUE(po.GetDescription().find("Allowed options") != std::string_view::npos);
 }
 
 TEST_F(ProgramOptionsTest, help_without_other_options) {
     test_options_["--help"];
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_TRUE(po_.IsHelp());
-    ASSERT_TRUE(po_.GetDescription().find("Allowed options") != std::string_view::npos);
+    const auto& po = res.value();
+    ASSERT_TRUE(po.IsHelp());
+    ASSERT_TRUE(po.GetDescription().find("Allowed options") != std::string_view::npos);
 }
 
 TEST_F(ProgramOptionsTest, help_with_other_options) {
@@ -65,8 +67,9 @@ TEST_F(ProgramOptionsTest, help_with_other_options) {
     test_options_["-p"] = "pass";
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_TRUE(po_.IsHelp());
-    ASSERT_TRUE(po_.GetDescription().find("Allowed options") != std::string_view::npos);
+    const auto& po = res.value();
+    ASSERT_TRUE(po.IsHelp());
+    ASSERT_TRUE(po.GetDescription().find("Allowed options") != std::string_view::npos);
 }
 
 TEST_F(ProgramOptionsTest, empty_options) {
@@ -99,11 +102,12 @@ TEST_F(ProgramOptionsTest, encrypt_command_with_all_options) {
     test_options_["--password"] = option_password;
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_EQ(po_.GetCommand(), ProgramOptions::CommandType::encrypt);
-    ASSERT_EQ(po_.GetInputFile(), option_input);
-    ASSERT_EQ(po_.GetOutputFile(), option_output);
-    ASSERT_EQ(po_.GetPassword(), option_password);
-    ASSERT_FALSE(po_.IsHelp());
+    const auto& po = res.value();
+    ASSERT_EQ(po.GetCommand(), ProgramOptions::CommandType::encrypt);
+    ASSERT_EQ(po.GetInputFile(), option_input);
+    ASSERT_EQ(po.GetOutputFile(), option_output);
+    ASSERT_EQ(po.GetPassword(), option_password);
+    ASSERT_FALSE(po.IsHelp());
 }
 
 TEST_F(ProgramOptionsTest, decrypt_command_with_all_options) {
@@ -116,11 +120,12 @@ TEST_F(ProgramOptionsTest, decrypt_command_with_all_options) {
     test_options_["--password"] = option_password;
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_EQ(po_.GetCommand(), ProgramOptions::CommandType::decrypt);
-    ASSERT_EQ(po_.GetInputFile(), option_input);
-    ASSERT_EQ(po_.GetOutputFile(), option_output);
-    ASSERT_EQ(po_.GetPassword(), option_password);
-    ASSERT_FALSE(po_.IsHelp());
+    const auto& po = res.value();
+    ASSERT_EQ(po.GetCommand(), ProgramOptions::CommandType::decrypt);
+    ASSERT_EQ(po.GetInputFile(), option_input);
+    ASSERT_EQ(po.GetOutputFile(), option_output);
+    ASSERT_EQ(po.GetPassword(), option_password);
+    ASSERT_FALSE(po.IsHelp());
 }
 
 TEST_F(ProgramOptionsTest, checksum_command_with_all_options) {
@@ -129,9 +134,10 @@ TEST_F(ProgramOptionsTest, checksum_command_with_all_options) {
     test_options_["--input"] = option_input;
     const auto res = ParseTestOptions();
     ASSERT_TRUE(res.has_value());
-    ASSERT_EQ(po_.GetCommand(), ProgramOptions::CommandType::checksum);
-    ASSERT_EQ(po_.GetInputFile(), option_input);
-    ASSERT_FALSE(po_.IsHelp());
+    const auto& po = res.value();
+    ASSERT_EQ(po.GetCommand(), ProgramOptions::CommandType::checksum);
+    ASSERT_EQ(po.GetInputFile(), option_input);
+    ASSERT_FALSE(po.IsHelp());
 }
 
 }  // namespace crypto_guard::test

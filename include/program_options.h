@@ -13,11 +13,9 @@ public:
     enum class CommandType { encrypt, decrypt, checksum, LAST };
 
     [[nodiscard]] static std::optional<CommandType> ParseCommandType(std::string_view type_str);
+    [[nodiscard]] static std::expected<ProgramOptions, std::string> Parse(std::span<const char* const> args);
 
-    ProgramOptions();
     ~ProgramOptions();
-
-    [[nodiscard]] std::expected<void, std::string> Parse(std::span<const char* const> args) const;
 
     [[nodiscard]] CommandType GetCommand() const { return command_; }
     [[nodiscard]] std::filesystem::path GetInputFile() const { return input_file_; }
@@ -27,11 +25,13 @@ public:
     [[nodiscard]] std::string GetDescription() const;
 
 private:
-    static constexpr auto s_option_command = "command";
-    static constexpr auto s_option_input = "input";
-    static constexpr auto s_option_output = "output";
-    static constexpr auto s_option_password = "password";
-    static constexpr auto s_option_help = "help";
+    static constexpr auto kOptionCommand = "command";
+    static constexpr auto kOptionInput = "input";
+    static constexpr auto kOptionOutput = "output";
+    static constexpr auto kOptionPassword = "password";
+    static constexpr auto kOptionHelp = "help";
+
+    ProgramOptions();
 
     CommandType command_{};
     std::filesystem::path input_file_;

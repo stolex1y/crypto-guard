@@ -15,52 +15,53 @@ namespace crypto_guard {
 ProgramOptions::ProgramOptions() : desc_("Allowed options") {
     // clang-format off
     desc_.add_options()
-        (MakeOptionName(s_option_help, "h").c_str(), po::bool_switch(&help_), "help")
-        (MakeOptionName(s_option_command, "c").c_str(), po::value<CommandType>(&command_), "type of command being executed, available values: encrypt, decrypt, checksum")
-        (MakeOptionName(s_option_input, "i").c_str(), po::value<std::filesystem::path>(&input_file_), "path to the input file")
-        (MakeOptionName(s_option_output, "o").c_str(), po::value<std::filesystem::path>(&output_file_), "path to the file where the result will be saved")
-        (MakeOptionName(s_option_password, "p").c_str(), po::value<std::string>(&password_)->default_value(""), "password for encryption and decryption")
+        (MakeOptionName(kOptionHelp, "h").c_str(), po::bool_switch(&help_), "help")
+        (MakeOptionName(kOptionCommand, "c").c_str(), po::value<CommandType>(&command_), "type of command being executed, available values: encrypt, decrypt, checksum")
+        (MakeOptionName(kOptionInput, "i").c_str(), po::value<std::filesystem::path>(&input_file_), "path to the input file")
+        (MakeOptionName(kOptionOutput, "o").c_str(), po::value<std::filesystem::path>(&output_file_), "path to the file where the result will be saved")
+        (MakeOptionName(kOptionPassword, "p").c_str(), po::value<std::string>(&password_)->default_value(""), "password for encryption and decryption")
     ;
     // clang-format on
 }
 
 ProgramOptions::~ProgramOptions() = default;
 
-std::expected<void, std::string> ProgramOptions::Parse(std::span<const char* const> args) const {
+std::expected<ProgramOptions, std::string> ProgramOptions::Parse(std::span<const char* const> args) {
+    ProgramOptions options;
     try {
         po::variables_map vm;
-        po::store(po::parse_command_line(static_cast<int>(args.size()), args.data(), desc_), vm);
+        po::store(po::parse_command_line(static_cast<int>(args.size()), args.data(), options.desc_), vm);
         po::notify(vm);
 
-        if (help_) {
-            return {};
+        if (options.help_) {
+            return std::move(options);
         }
 
-        if (not vm.contains(s_option_command)) {
-            throw po::required_option(s_option_command);
+        if (not vm.contains(kOptionCommand)) {
+            throw po::required_option(kOptionCommand);
         }
 
-        switch (command_) {
+        switch (options.command_) {
         case CommandType::encrypt:
             [[fallthrough]];
         case CommandType::decrypt: {
-            if (not vm.contains(s_option_input)) {
-                throw po::required_option(s_option_input);
+            if (not vm.contains(kOptionInput)) {
+                throw po::required_option(kOptionInput);
             }
 
-            if (not vm.contains(s_option_output)) {
-                throw po::required_option(s_option_output);
+            if (not vm.contains(kOptionOutput)) {
+                throw po::required_option(kOptionOutput);
             }
 
-            if (input_file_ == output_file_) {
+            if (options.input_file_ == options.output_file_) {
                 return std::unexpected{
-                    std::format("the input file must be different to the output '{}'", input_file_.string())};
+                    std::format("the input file must be different to the output '{}'", options.input_file_.string())};
             }
             break;
         }
         case CommandType::checksum: {
-            if (not vm.contains(s_option_input)) {
-                throw po::required_option(s_option_input);
+            if (not vm.contains(kOptionInput)) {
+                throw po::required_option(kOptionInput);
             }
             break;
         }
@@ -75,7 +76,7 @@ std::expected<void, std::string> ProgramOptions::Parse(std::span<const char* con
         return std::unexpected{ex.what()};
     }
 
-    return {};
+    return std::move(options);
 }
 
 std::string ProgramOptions::GetDescription() const {

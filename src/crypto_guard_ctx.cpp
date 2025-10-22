@@ -31,25 +31,25 @@ public:
     }
 
     [[nodiscard]] std::string CalculateChecksum(std::istream& in_stream) {
-        if (in_stream.fail() and not in_stream.eof()) {
+        if (in_stream.fail() && !in_stream.eof()) {
             throw std::runtime_error("Invalid input stream");
         }
 
         const auto ctx = CreateMdCtx();
-        while (not in_stream.eof()) {
+        while (!in_stream.eof()) {
             in_stream.read(in_buf_.data(), in_buf_.size());
-            if (in_stream.fail() and not in_stream.eof()) {
+            if (in_stream.fail() && !in_stream.eof()) {
                 throw std::runtime_error("Couldn't read from input stream");
             }
             const auto bytes_read = in_stream.gcount();
 
-            if (not EVP_DigestUpdate(ctx.get(), in_buf_.data(), bytes_read)) {
+            if (!EVP_DigestUpdate(ctx.get(), in_buf_.data(), bytes_read)) {
                 throw std::runtime_error(std::format("Couldn't calculate checksum: {}", GetErrReason()));
             }
         }
 
         uint32_t out_len{};
-        if (not EVP_DigestFinal_ex(ctx.get(), reinterpret_cast<unsigned char*>(out_buf_.data()), &out_len)) {
+        if (!EVP_DigestFinal_ex(ctx.get(), reinterpret_cast<unsigned char*>(out_buf_.data()), &out_len)) {
             throw std::runtime_error(std::format("Couldn't calculate checksum: {}", GetErrReason()));
         }
 
@@ -84,7 +84,7 @@ private:
                                     reinterpret_cast<const unsigned char*>(password.data()),
                                     static_cast<int>(password.size()), 1, params.key.data(), params.iv.data());
 
-        if (not result) {
+        if (!result) {
             throw std::runtime_error{std::format("Failed to create a key from password: {}", GetErrReason())};
         }
 
@@ -93,15 +93,15 @@ private:
 
     static EvpCipherCtxPtr CreateCipherCtx(std::string_view password, bool encrypt) {
         auto ctx = EvpCipherCtxPtr{EVP_CIPHER_CTX_new()};
-        if (not ctx) {
+        if (!ctx) {
             throw std::runtime_error(std::format("Couldn't create cipher context: {}", GetErrReason()));
         }
 
         auto params = CreateCipherParamsFromPassword(password);
         params.encrypt = encrypt ? 1 : 0;
 
-        if (not EVP_CipherInit_ex(ctx.get(), params.cipher, nullptr, params.key.data(), params.iv.data(),
-                                  params.encrypt)) {
+        if (!EVP_CipherInit_ex(ctx.get(), params.cipher, nullptr, params.key.data(), params.iv.data(),
+                               params.encrypt)) {
             throw std::runtime_error(std::format("Couldn't initialize cipher context: {}", GetErrReason()));
         }
 
@@ -110,7 +110,7 @@ private:
 
     static std::string GetErrReason() {
         const auto ec = ERR_get_error();
-        if (not ec) {
+        if (!ec) {
             return {};
         }
         return ERR_reason_error_string(ec);
@@ -118,52 +118,52 @@ private:
 
     static EvpMdCtxPtr CreateMdCtx() {
         auto ctx = EvpMdCtxPtr{EVP_MD_CTX_new()};
-        if (not ctx) {
+        if (!ctx) {
             throw std::runtime_error(std::format("Couldn't create md context: {}", GetErrReason()));
         }
         const auto md = EVP_sha256();
-        if (not EVP_DigestInit_ex2(ctx.get(), md, nullptr)) {
+        if (!EVP_DigestInit_ex2(ctx.get(), md, nullptr)) {
             throw std::runtime_error(std::format("Couldn't initialize md context: {}", GetErrReason()));
         }
         return ctx;
     }
 
     void ProcessFile(std::istream& in_stream, std::ostream& out_stream, std::string_view password, bool encrypt) {
-        if (in_stream.fail() and not in_stream.eof()) {
+        if (in_stream.fail() && !in_stream.eof()) {
             throw std::runtime_error{"Invalid input stream"};
         }
-        if (not out_stream) {
+        if (!out_stream) {
             throw std::runtime_error{"Invalid output stream"};
         }
 
         const auto ctx = CreateCipherCtx(password, encrypt);
 
-        while (not in_stream.eof()) {
+        while (!in_stream.eof()) {
             in_stream.read(in_buf_.data(), in_buf_.size());
-            if (in_stream.fail() and not in_stream.eof()) {
+            if (in_stream.fail() && !in_stream.eof()) {
                 throw std::runtime_error("Couldn't read from input stream");
             }
             const auto bytes_read = in_stream.gcount();
 
             int out_len{};
-            if (not EVP_CipherUpdate(ctx.get(), reinterpret_cast<unsigned char*>(out_buf_.data()), &out_len,
-                                     reinterpret_cast<const unsigned char*>(in_buf_.data()), bytes_read)) {
+            if (!EVP_CipherUpdate(ctx.get(), reinterpret_cast<unsigned char*>(out_buf_.data()), &out_len,
+                                  reinterpret_cast<const unsigned char*>(in_buf_.data()), bytes_read)) {
                 throw std::runtime_error(
                     std::format("Couldn't {} data: {}", encrypt ? "encrypt" : "decrypt", GetErrReason()));
             }
             out_stream.write(out_buf_.data(), out_len);
-            if (not out_stream) {
+            if (!out_stream) {
                 throw std::runtime_error("Couldn't write to output stream");
             }
         }
 
         int out_len{};
-        if (not EVP_CipherFinal_ex(ctx.get(), reinterpret_cast<unsigned char*>(out_buf_.data()), &out_len)) {
+        if (!EVP_CipherFinal_ex(ctx.get(), reinterpret_cast<unsigned char*>(out_buf_.data()), &out_len)) {
             throw std::runtime_error(
                 std::format("Couldn't {} data: {}", encrypt ? "encrypt" : "decrypt", GetErrReason()));
         }
         out_stream.write(out_buf_.data(), out_len);
-        if (not out_stream) {
+        if (!out_stream) {
             throw std::runtime_error("Couldn't write to output stream");
         }
     }

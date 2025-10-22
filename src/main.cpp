@@ -8,12 +8,12 @@
 
 int main(int argc, char* argv[]) {
     try {
-        crypto_guard::ProgramOptions options;
-        const auto parsing_result = options.Parse(std::span(argv, argc));
-        if (not parsing_result) {
+        const auto parsing_result = crypto_guard::ProgramOptions::Parse(std::span(argv, argc));
+        if (!parsing_result) {
             std::println("Invalid input options: {}", parsing_result.error());
             return 1;
         }
+        const auto& options = parsing_result.value();
         if (options.IsHelp()) {
             std::println("{}", options.GetDescription());
             return 0;
@@ -24,12 +24,12 @@ int main(int argc, char* argv[]) {
         switch (options.GetCommand()) {
         case COMMAND_TYPE::encrypt: {
             std::ifstream src_file{options.GetInputFile()};
-            if (not src_file) {
+            if (!src_file) {
                 std::println("Could not open the input file '{}'", options.GetInputFile().string());
                 return 1;
             }
             std::ofstream encrypted_file{options.GetOutputFile()};
-            if (not encrypted_file) {
+            if (!encrypted_file) {
                 std::println("Could not open the output file '{}'", options.GetOutputFile().string());
                 return 1;
             }
@@ -40,12 +40,12 @@ int main(int argc, char* argv[]) {
         }
         case COMMAND_TYPE::decrypt: {
             std::ifstream encrypted_file{options.GetInputFile()};
-            if (not encrypted_file) {
+            if (!encrypted_file) {
                 std::println("Could not open the input file '{}'", options.GetInputFile().string());
                 return 1;
             }
             std::ofstream decrypted_file{options.GetOutputFile()};
-            if (not decrypted_file) {
+            if (!decrypted_file) {
                 std::println("Could not open the output file '{}'", options.GetOutputFile().string());
                 return 1;
             }
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
         }
         case COMMAND_TYPE::checksum: {
             std::ifstream file{options.GetInputFile()};
-            if (not file) {
+            if (!file) {
                 std::println("Could not open the input file '{}'", options.GetInputFile().string());
                 return 1;
             }
